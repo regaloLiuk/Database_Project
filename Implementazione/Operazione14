@@ -1,0 +1,4 @@
+﻿/*Operazione15*/
+Select C.*,C2.*
+from (COMMENTO C join ASSOCIATO A on(C.Data_=A.DataDomanda and C.Ricetta=A.RicettaDomanda))
+ join COMMENTO C2 on(C2.Data_=A.DataRisposta and C2.Ricetta=A.RicettaRisposta)

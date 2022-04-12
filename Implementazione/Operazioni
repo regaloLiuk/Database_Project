@@ -1,0 +1,32 @@
+﻿/*Operazione 13*/
+
+Select RICETTA.*,AUTORE.NomeCuoco,REALIZZA.Username,PUBBLICAZIONE.NomeRedazione
+From ((((RICETTA join COMPOSIZIONE on RICETTA.Titolo = COMPOSIZIONE.Titolo) 
+		join INGREDIENTE on COMPOSIZIONE.NomeIngrediente = INGREDIENTE.Nome) 
+		full join AUTORE on RICETTA.Titolo = AUTORE.Titolo)
+		full join REALIZZA on RICETTA.Titolo = REALIZZA.Titolo)
+		full join PUBBLICAZIONE on RICETTA.Titolo = PUBBLICAZIONE.Titolo
+/*Operazione 14*/
+Select *
+From COMMENTO
+where Ricetta = 'Fiorentina'
+
+/*Operazione 15*/
+Select C.*,C2.*
+from (COMMENTO C join ASSOCIATO A on(C.Data_=A.DataDomanda and C.Ricetta=A.RicettaDomanda))
+ join COMMENTO C2 on(C2.Data_=A.DataRisposta and C2.Ricetta=A.RicettaRisposta)
+
+/*Operazione 16*/
+select C.*,R.Titolo
+from (AUTORE A join CUOCO C on(C.Nome=A.NomeCuoco)) join RICETTA R on(R.Titolo=A.Titolo)
+where C.Nome='Bruno Barbieri'
+
+/*Operazione 18*/
+select R.Titolo,R2.Titolo
+from (RICETTA R join SIMILI S  on(R.Titolo=S.Ricetta)) join RICETTA R2 on(R2.Titolo=S.RicettaSimile)
+where R.Titolo='Pasta alla matriciana'
+
+/*Operazione 19*/
+select C
+from (COMMENTO C join POSTA P on(C.Data_=P.Data_ AND C.Ricetta=P.Ricetta)) join UTENTE U on(P.Username=U.Username)
+where U.Username='AnnettaPippi'

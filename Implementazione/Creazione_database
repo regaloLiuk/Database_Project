@@ -1,0 +1,256 @@
+﻿begin;
+
+
+drop table if exists SEGUE;
+drop table if exists SPESA;
+drop table if exists REALIZZA;
+drop table if exists PREFERITI;
+drop table if exists COMPOSIZIONE;
+drop table if exists AUTORE;
+drop table if exists SIMILI;
+drop table if exists PUBBLICAZIONE;
+drop table if exists RISPOSTA;
+drop table if exists POSTA;
+drop table if exists ASSOCIATO;
+
+drop table if exists CUOCO;
+drop table if exists COMMENTO;
+drop table if exists RICETTA;
+drop table if exists INGREDIENTE;
+drop table if exists UTENTE;
+drop table if exists REDAZIONE;
+
+
+
+create table CUOCO(
+    Nome varchar(20),
+    Foto bytea,
+    Biografia text not null,
+    NumeroRicette decimal(2) default 0,
+    constraint CUOCO_PK primary key(Nome)
+);
+create table RICETTA(
+    Titolo varchar(40),
+    Cottura decimal(3)  check (Cottura >=1 AND Cottura <= 999) not null,
+    Dieta varchar(20)[] check ( (Dieta[1] like 'Vegetariana' or Dieta[1] is null) and
+				(Dieta[2] like 'Senza lattosio' or Dieta[2] is null) and
+				(Dieta[3] like 'Senza glutine' or Dieta[3] is null) and
+				(Dieta[4] like 'Bio' or Dieta[4] is null)
+				 ),
+    Preparazione text not null,
+    TempoPreparazione decimal(3) check (TempoPreparazione >=1) not null,
+    Portata varchar(20) not null check(Portata like 'Antipasto' or Portata like 'Primo piatto' or
+					Portata like 'Secondo piatto' or Portata like 'Dolce'),
+    Prezzo varchar(10) not null check(Prezzo like 'Basso' or Prezzo like 'Medio' or
+					Prezzo like 'Alto'),
+    Difficoltà varchar(20) not null check(Difficoltà like 'Molto facile' or Difficoltà like 'Facile' or
+					Difficoltà like 'Media' or Difficoltà like 'Difficile' or Difficoltà like 'Molto difficile') ,
+    Calorie decimal(3)  check (Calorie >=1) not null,
+    Foto bytea,
+
+
+    constraint RICETTA_PK primary key(Titolo)
+);
+
+create table INGREDIENTE(
+    Nome varchar(30) not null,
+    note text,
+    constraint INGREDIENTE_PK primary key(Nome)
+);
+
+create table COMMENTO(
+	Data_ timestamp,
+	Ricetta varchar(20) references RICETTA(Titolo),
+	Testo text,
+	constraint COMMENTO_PK primary key(Data_,Ricetta)
+);
+
+create table UTENTE(
+    Username varchar(20),
+    Password varchar(20) not null,
+    Mail varchar(50) not null,
+    NumeroCommenti decimal(3) default 0,
+    Foto bytea,
+    constraint UTENTE_PK primary key(Username)
+);
+
+create table REDAZIONE(
+	Nome varchar(40),
+	Foto bytea,
+	constraint REDAZIONE_PK primary key(Nome)
+);
+create table SEGUE(
+    Username varchar(20) ,
+    NomeCuoco varchar(20) ,
+    constraint SEGUE_PK primary key(Username,NomeCuoco),
+    constraint SEGUE_FK_UTENTE foreign key(Username) references UTENTE(Username) on delete cascade,
+    constraint SEGUE_FK_CUOCO foreign key(NomeCuoco) references CUOCO(Nome) on delete cascade
+);
+create table SPESA(
+    Username varchar(20) ,
+    NomeIngrediente varchar(20),
+    Quantità decimal(2) not null,
+    constraint SPESA_PK primary key(Username,NomeIngrediente),
+    constraint SPESA_FK_UTENTE foreign key(Username) references UTENTE(Username) on delete cascade,
+    constraint SPESA_FK_INGREDIENTE foreign key(NomeIngrediente) references INGREDIENTE(Nome) on delete cascade
+);
+create table REALIZZA(
+    Username varchar(20),
+    Titolo varchar(40),
+    constraint REALIZZA_PK primary key(Username,Titolo),
+    constraint SPESA_FK_RICETTA foreign key(Titolo) references RICETTA(Titolo) on delete cascade
+);
+create table PREFERITI(
+    Username varchar(20) ,
+    Titolo varchar(40),
+    constraint PREFERITI_PK primary key(Username,Titolo),
+    constraint PREFERITI_FK_UTENTE foreign key(Username) references UTENTE(Username) on delete cascade,
+    constraint PREFERITI_FK_RICETTA foreign key(Titolo) references RICETTA(Titolo) on delete cascade
+);
+
+create table COMPOSIZIONE(
+    NomeIngrediente varchar(20) ,
+    Titolo varchar(40),
+    Quantità decimal(4) not null,
+    constraint COMPOSIZIONE_PK primary key(NomeIngrediente,Titolo),
+    constraint COMPOSIZIONE_FK_INGREDIENTE foreign key(Nomeingrediente) references INGREDIENTE(Nome) on delete cascade,
+    constraint COMPOSIZIONE_FK_RICETTA foreign key(Titolo) references RICETTA(Titolo) on delete cascade
+);
+create table AUTORE(
+    NomeCuoco varchar(20) ,
+    Titolo varchar(40),
+    constraint AUTORE_PK primary key(NomeCuoco,Titolo),
+    constraint AUTORE_FK_CUOCO foreign key(NomeCuoco) references CUOCO(Nome) on delete cascade,
+    constraint AUTORE_FK_RICETTA foreign key(Titolo) references RICETTA(Titolo) on delete cascade
+);
+create table SIMILI(
+	Ricetta varchar(40),
+	RicettaSimile varchar(40),
+	constraint SIMILI_PK primary key(Ricetta,RicettaSimile),
+	constraint SIMILI_FK_RICETTA foreign key(Ricetta) references RICETTA(Titolo) on delete cascade,
+	constraint SIMILI_FK_RICETTA2 foreign key(RicettaSimile) references RICETTA(Titolo) on delete cascade
+);
+create table PUBBLICAZIONE(
+    NomeRedazione varchar(50) ,
+    Titolo varchar(40),
+    constraint PUBBLICAZIONE_PK primary key(NomeRedazione,Titolo),
+    constraint PUBBLICAZIONE_FK_REDAZIONE foreign key(NomeRedazione) references REDAZIONE(Nome) on delete cascade,
+    constraint PUBBLICAZIONE_FK_RICETTA foreign key(Titolo) references RICETTA(Titolo) on delete cascade
+);
+create table RISPOSTA(
+    Data_ timestamp,
+    Ricetta varchar(20),
+    NomeRedazione varchar(50) ,
+    constraint RISPOSTA_PK primary key(Data_,NomeRedazione,Ricetta),
+    constraint RISPOSTA_FK_REDAZIONE foreign key(NomeRedazione) references REDAZIONE(Nome) on delete cascade,
+    constraint RISPOSTA_FK_COMMENTO foreign key(Ricetta,Data_) references COMMENTO(Ricetta,Data_) on delete cascade
+    
+);
+create table POSTA(
+    Data_ timestamp,
+    Ricetta varchar(40),
+    Username varchar(20) ,
+    constraint POSTA_PK primary key(Data_,Ricetta,Username),
+    constraint POSTA_FK_COMMENTO foreign key(Ricetta,Data_) references COMMENTO(Ricetta,Data_) on delete cascade
+    
+    
+);
+create table ASSOCIATO(
+	RicettaDomanda varchar(40),
+	DataDomanda timestamp,
+	RicettaRisposta varchar(40),
+	DataRisposta timestamp,
+	constraint ASSOCIATO_PK primary key(RicettaDomanda,DataDomanda,RicettaRisposta,DataRisposta),
+	constraint ASSOCIATO_FK_COMMENTO foreign key(RicettaDomanda,DataDomanda) references COMMENTO(Ricetta,Data_) on delete cascade,
+	constraint ASSOCIATO_FK_COMMENTO2 foreign key(RicettaRisposta,DataRisposta) references COMMENTO(Ricetta,Data_) on delete cascade
+);
+
+insert into CUOCO(Nome,Foto,Biografia,NumeroRicette) values ('Alessandro Borghese','0','Nato a San Francisco, 19 novembre 1976',0);
+insert into CUOCO(Nome,Foto,Biografia,NumeroRicette) values ('Bruno Barbieri','0','Nato a Medicina, 12 gennaio 1962',1);
+insert into CUOCO(Nome,Foto,Biografia,NumeroRicette) values ('Carlo Cracco','0','Nato a Creazzo, 8 ottobre 1965',0);
+
+insert into RICETTA(Titolo,Cottura,Dieta,Preparazione,TempoPreparazione,Portata,Prezzo,Difficoltà,Calorie,Foto) values
+		('Pasta al pesto',10,'{Vegetariana,NULL,NULL,Bio}','fai bollire!!',30,'Primo piatto','Basso','Molto facile',500,'011');
+insert into RICETTA(Titolo,Cottura,Dieta,Preparazione,TempoPreparazione,Portata,Prezzo,Difficoltà,Calorie,Foto) values
+		('Pasta alla matriciana',10,'{NULL,Senza lattosio,NULL,Bio}',' ',30,'Primo piatto','Basso','Molto facile',500,'01');
+insert into RICETTA(Titolo,Cottura,Dieta,Preparazione,TempoPreparazione,Portata,Prezzo,Difficoltà,Calorie,Foto) values
+		('Fiorentina',15,'{NULL,Senza lattosio,Senza glutine,Bio}','al sangue',30,'Secondo piatto','Alto','Media',500,'011111');
+insert into RICETTA(Titolo,Cottura,Dieta,Preparazione,TempoPreparazione,Portata,Prezzo,Difficoltà,Calorie,Foto) values
+		('Capesante in Primavera',25,'{NULL,NULL,NULL,Bio}','Non fare un mappazzone!',50,'Secondo piatto','Alto','Difficile',500,'0101');
+insert into RICETTA(Titolo,Cottura,Dieta,Preparazione,TempoPreparazione,Portata,Prezzo,Difficoltà,Calorie,Foto) values
+		('Torta salata',25,'{Vegetariana,NULL,NULL,Bio}','Facile e veloce.',30,'Secondo piatto','Basso','Facile',300,'0101');
+
+insert into INGREDIENTE(Nome,note) values ('Pasta','di Gragnano');
+insert into INGREDIENTE(Nome,note) values ('Pesto','alla genovese');
+insert into INGREDIENTE(Nome,note) values ('Parmigiano',null);
+insert into INGREDIENTE(Nome,note) values ('Carne',null);
+insert into INGREDIENTE(Nome,note) values ('Sugo','pomodoro pachino');
+insert into INGREDIENTE(Nome,note) values ('Peperoncino',null);
+insert into INGREDIENTE(Nome,note) values ('Sfoglia',null);
+insert into INGREDIENTE(Nome,note) values ('Melanzane',null);
+insert into INGREDIENTE(Nome,note) values ('Zucchine',null);
+insert into INGREDIENTE(Nome,note) values ('Capesante',null);
+insert into INGREDIENTE(Nome,note) values ('Limone',null);
+
+insert into UTENTE(Username,Password,Mail,NumeroCommenti,foto) values ('Peppe334','12034','Giuseppe34@libero.it',1,'0');
+insert into UTENTE(Username,Password,Mail,NumeroCommenti,foto) values ('AnnettaPippi','angelomio','Anna.Maria@gmail.com',1,'0');
+insert into UTENTE(Username,Password,Mail,NumeroCommenti,foto) values ('MikeBomber95','ulisse','Michele.Pasti@hotmail.com',0,'0');
+
+insert into COMMENTO(Data_,Ricetta,Testo) values ('2007-04-30 13:10:02.0474381','Pasta al pesto','Una mitica ricetta semplice e veloce...Complimenti!');/*Peppe334*/
+insert into COMMENTO(Data_,Ricetta,Testo) values ('2007-04-20 13:11:02.0474381','Fiorentina','Di quale regione è tipica questa ricetta?');/*AnnettaPippi*/
+insert into COMMENTO(Data_,Ricetta,Testo) values ('2007-05-03 13:11:02.0474381','Fiorentina','Toscana');/*Redazione*/
+
+insert into REDAZIONE(Nome,foto) values ('Redazione-GialloZafferano','0');
+
+insert into SEGUE(Username,NomeCuoco) values ('Peppe334','Bruno Barbieri');
+insert into SEGUE(Username,NomeCuoco) values ('Peppe334','Carlo Cracco');
+insert into SEGUE(Username,NomeCuoco) values ('MikeBomber95','Bruno Barbieri');
+
+insert into SPESA(Username,NomeIngrediente,Quantità) values ('Peppe334','Parmigiano',3);
+insert into SPESA(Username,NomeIngrediente,Quantità) values ('MikeBomber95','Parmigiano',3);
+insert into SPESA(Username,NomeIngrediente,Quantità) values ('AnnettaPippi','Parmigiano',3);
+
+
+insert into REALIZZA(Username,Titolo) values ('MikeBomber95','Pasta al pesto');
+insert into REALIZZA(Username,Titolo) values ('Peppe334','Pasta alla matriciana');
+insert into REALIZZA(Username,Titolo) values ('Peppe334','Fiorentina');
+
+insert into PREFERITI(Username,Titolo) values ('Peppe334','Pasta alla matriciana');
+insert into PREFERITI(Username,Titolo) values ('AnnettaPippi','Pasta alla matriciana');
+insert into PREFERITI(Username,Titolo) values ('MikeBomber95','Fiorentina');
+
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Parmigiano','Pasta al pesto',50);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Pesto','Pasta al pesto',30);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Pasta','Pasta al pesto',80);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Carne','Fiorentina',500);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Sugo','Pasta alla matriciana',30);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Peperoncino','Pasta alla matriciana',30);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Sfoglia','Torta salata',100);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Melanzane','Torta salata',40);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Zucchine','Torta salata',40);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Limone','Capesante in Primavera',2);
+insert into COMPOSIZIONE(NomeIngrediente,Titolo,Quantità) values ('Capesante','Capesante in Primavera',4);
+
+insert into AUTORE(NomeCuoco,Titolo) values ('Bruno Barbieri','Capesante in Primavera');
+
+insert into SIMILI(Ricetta,RicettaSimile) values('Pasta alla matriciana','Fiorentina');
+
+insert into PUBBLICAZIONE(NomeRedazione,Titolo) values('Redazione-GialloZafferano','Torta salata');
+
+insert into RISPOSTA(Data_,Ricetta,NomeRedazione) values('2007-05-03 13:11:02.0474381','Fiorentina','Redazione-GialloZafferano');
+
+insert into POSTA(Data_,Ricetta,Username) values('2007-04-30 13:10:02.0474381','Pasta al pesto','Peppe334');
+insert into POSTA(Data_,Ricetta,Username) values('2007-04-20 13:11:02.0474381','Fiorentina','AnnettaPippi');
+
+insert into Associato(RicettaDomanda,DataDomanda,RicettaRisposta,DataRisposta) values
+('Fiorentina','2007-04-20 13:11:02.0474381','Fiorentina','2007-05-03 13:11:02.0474381');
+
+delete from UTENTE
+	where Username = 'Peppe334';
+
+delete from INGREDIENTE
+	where Nome = 'Limone';
+
+commit;
+
+
